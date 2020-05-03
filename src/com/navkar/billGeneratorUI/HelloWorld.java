@@ -2,11 +2,7 @@ package com.navkar.billGeneratorUI;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPasswordField;
-import javax.swing.JTextField;
+import javax.swing.*;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -51,6 +47,7 @@ public class HelloWorld {
 			     };
 			     if(pass.equals("12")){
 			    	 frame.setVisible(false);
+			    	 ReceiptWindowUI receiptWindow = new ReceiptWindowUI();
 			    }
 			     String data = "User " + text.getText();  
 			     data += ", Pass: "   

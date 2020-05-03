@@ -1,30 +1,47 @@
 package com.navkar.billGeneratorUI;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Properties;
 
-import javax.swing.GroupLayout;
-import javax.swing.GroupLayout.Alignment;
+import javax.swing.AbstractButton;
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.LayoutStyle.ComponentPlacement;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
 
+import org.jdatepicker.JDatePicker;
+import org.jdatepicker.impl.JDatePanelImpl;
 import org.jdatepicker.impl.JDatePickerImpl;
+import org.jdatepicker.impl.UtilDateModel;
+
+import com.navkar.faltu.AdministratorForm;
+import com.navkar.helper.DateLabelFormatter;
+
+import antlr.collections.List;
+
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JTextField;
+import javax.swing.GroupLayout.Alignment;
+import javax.swing.GroupLayout;
+import javax.swing.LayoutStyle.ComponentPlacement;
 
 public class ReceiptWindowUI extends JFrame {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
 	private JButton resetBtn;
 	private JTextField companyNameValue;
 	private JLabel companyName;
@@ -43,6 +60,9 @@ public class ReceiptWindowUI extends JFrame {
 	private JTextField balValue;
 	private JTextField totalValue;
 	private JButton addRow;
+	private JButton saveAs;
+	private JButton submit;
+	private JTextField addRowValue;
 	
 	public ReceiptWindowUI() {
 		initComponents();
@@ -67,6 +87,10 @@ public class ReceiptWindowUI extends JFrame {
         balValue = new JTextField(15);
         totalValue = new JTextField(15);
         addRow = new JButton();
+        saveAs = new JButton();
+        submit = new JButton();
+        addRowValue = new JTextField(10);
+        
         //creating date picker
         JDatePickerImpl datePicker = UIUtilis.createDatePicker();
 
@@ -90,8 +114,8 @@ public class ReceiptWindowUI extends JFrame {
         				.addGroup(layout.createSequentialGroup()
         					.addPreferredGap(ComponentPlacement.UNRELATED)
         					.addGroup(layout.createParallelGroup(Alignment.LEADING)
-        						.addComponent(datePicker, GroupLayout.PREFERRED_SIZE, 184, GroupLayout.PREFERRED_SIZE)
-        						.addComponent(companyNameValue, GroupLayout.PREFERRED_SIZE, 184, GroupLayout.PREFERRED_SIZE))))
+        					.addComponent(datePicker, GroupLayout.PREFERRED_SIZE, 184, GroupLayout.PREFERRED_SIZE)
+        					.addComponent(companyNameValue, GroupLayout.PREFERRED_SIZE, 184, GroupLayout.PREFERRED_SIZE))))
         			.addContainerGap(366, Short.MAX_VALUE))
         		.addGroup(Alignment.TRAILING, layout.createSequentialGroup()
         			.addContainerGap(20, Short.MAX_VALUE)
@@ -154,12 +178,8 @@ public class ReceiptWindowUI extends JFrame {
         String [] colNames  = {"SrNo","Particulars","Quantity","Amount"};
         String [][] rowData = new String[8][4];
 		
-        DefaultTableModel tableModel = new DefaultTableModel(rowData, colNames) {
-        	/**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
-			boolean[] canEdit = new boolean[]{false, true, true, true };
+        final DefaultTableModel tableModel = new DefaultTableModel(rowData, colNames) {
+        	boolean[] canEdit = new boolean[]{false, true, true, true };
         	
         	@Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -167,7 +187,6 @@ public class ReceiptWindowUI extends JFrame {
             }
         };
         jtable = new JTable(tableModel);
-        
         jtable.setFont(getFont());
         jtable.setRowHeight(30);
         jtable.getTableHeader().setPreferredSize(new Dimension(100, 30));
@@ -186,15 +205,36 @@ public class ReceiptWindowUI extends JFrame {
 		advance.setText("Advance");
 		balance.setText("Balance");
 		totalAmount.setText("Total");
-		addRow.setText("Add Particuar's Row ");
+		addRow.setText("Add Rows : ");
+		addRow.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addRowBtnActionPerformed(evt,tableModel);
+            }
+
+        });
+		saveAs.setText("SAVE AS");
+		saveAs.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				saveAsBtnActionPerformed(e);
+			}
+		});
+		submit.setText("SUBMIT");
+		submit.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				submitBtnActionPerformed(e);
+			}
+		});
 		bottomLayout.setAutoCreateGaps(true);
 		bottomLayout.setAutoCreateContainerGaps(true);
 		
 		bottomLayout.setHorizontalGroup(
 				bottomLayout.createSequentialGroup()
-				.addGap(400)
-				  .addGroup(bottomLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-						  .addComponent(addRow).addGap(50)
+				.addGap(100)
+				  .addGroup(bottomLayout.createSequentialGroup()
+						  .addComponent(saveAs).addGap(25)
+						  .addComponent(submit).addGap(25)
+						  .addComponent(addRow).addGap(2)
+						  .addComponent(addRowValue).addGap(25)
 						  .addGroup(bottomLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
 								  .addComponent(advance)
 								  .addComponent(balance)
@@ -208,7 +248,10 @@ public class ReceiptWindowUI extends JFrame {
 		bottomLayout.setVerticalGroup(
 				bottomLayout.createSequentialGroup()
 					.addGroup(bottomLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+							.addComponent(saveAs,GroupLayout.PREFERRED_SIZE, 28, GroupLayout.PREFERRED_SIZE)
+							.addComponent(submit,GroupLayout.PREFERRED_SIZE, 28, GroupLayout.PREFERRED_SIZE)
 							.addComponent(addRow,GroupLayout.PREFERRED_SIZE, 28, GroupLayout.PREFERRED_SIZE)
+							.addComponent(addRowValue,GroupLayout.PREFERRED_SIZE, 28, GroupLayout.PREFERRED_SIZE)
 							.addComponent(advance)
 							.addComponent(advValue, GroupLayout.PREFERRED_SIZE, 28, GroupLayout.PREFERRED_SIZE))
 					.addGroup(bottomLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
@@ -228,6 +271,16 @@ public class ReceiptWindowUI extends JFrame {
         pack();
 	}
 	
+	protected void saveAsBtnActionPerformed(ActionEvent e) {
+		System.out.println(" evt.getActionCommand() : "+e.getActionCommand());
+		UIUtilis.convertPanelToPdf(tablePanel,900,2000,"/home/himankjain/Videos/mj/my_panel_pdf.pdf");
+	}
+
+	protected void submitBtnActionPerformed(ActionEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
 	public void setAllDataDields(ReceiptWindow receiptWindow){
 		if(receiptWindow==null){
 		return;
@@ -248,5 +301,16 @@ public class ReceiptWindowUI extends JFrame {
 		HelloWorld a=new HelloWorld();
 		a.frame.setVisible(true);
 		this.setVisible(false);
+	}
+	
+	private void addRowBtnActionPerformed(ActionEvent evt,final DefaultTableModel model){ 
+		String s = addRowValue.getText();
+		int numRowToAdd = Integer.parseInt(s.trim());
+		if(numRowToAdd>15){
+			JOptionPane.showMessageDialog(null,"The Number of rows should not be more than 15 rows at a time.");	
+		}else{
+			for(int i=0;i<numRowToAdd;i++)
+			model.insertRow(1, new String [3]); 
+		}
 	}
 }
