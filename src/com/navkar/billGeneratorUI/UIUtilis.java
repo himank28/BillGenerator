@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.util.Properties;
 
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.table.TableColumn;
@@ -43,6 +44,9 @@ public class UIUtilis {
 	    }
 	}
 	
+	public static void setWarningMessage(String message){
+		JOptionPane.showMessageDialog(null,message);	
+	}
 	
 	public static JDatePickerImpl createDatePicker(){
 		Properties p = new Properties();

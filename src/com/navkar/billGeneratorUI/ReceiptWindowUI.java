@@ -1,47 +1,42 @@
 package com.navkar.billGeneratorUI;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.EventQueue;
-import java.awt.FlowLayout;
-import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Properties;
+import java.util.List;
 
-import javax.swing.AbstractButton;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.GroupLayout;
+import javax.swing.GroupLayout.Alignment;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumnModel;
-import javax.swing.table.TableModel;
-
-import org.jdatepicker.JDatePicker;
-import org.jdatepicker.impl.JDatePanelImpl;
-import org.jdatepicker.impl.JDatePickerImpl;
-import org.jdatepicker.impl.UtilDateModel;
-
-import com.navkar.faltu.AdministratorForm;
-import com.navkar.helper.DateLabelFormatter;
-
-import antlr.collections.List;
-
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JTextField;
-import javax.swing.GroupLayout.Alignment;
-import javax.swing.GroupLayout;
 import javax.swing.LayoutStyle.ComponentPlacement;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+
+import org.jdatepicker.impl.JDatePickerImpl;
+
+import com.navkar.billGenerator.Listener.TableCellListener;
+import com.navkar.billGenerator.keyconstants.KeyConstant;
+import com.navkar.billGeneratorPojo.BillBO;
+import com.navkar.billGeneratorPojo.LineItemBO;
+import com.navkar.billGeneratorPojo.QuantityBO;
 
 public class ReceiptWindowUI extends JFrame {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private JButton resetBtn;
 	private JTextField companyNameValue;
 	private JLabel companyName;
@@ -140,7 +135,6 @@ public class ReceiptWindowUI extends JFrame {
         				.addComponent(printBtn))
         			.addGap(25))
         );
-        
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setBackground(new java.awt.Color(153, 153, 255));
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
@@ -179,7 +173,11 @@ public class ReceiptWindowUI extends JFrame {
         String [][] rowData = new String[8][4];
 		
         final DefaultTableModel tableModel = new DefaultTableModel(rowData, colNames) {
-        	boolean[] canEdit = new boolean[]{false, true, true, true };
+        	/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+			boolean[] canEdit = new boolean[]{false, true, true, true };
         	
         	@Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -191,6 +189,7 @@ public class ReceiptWindowUI extends JFrame {
         jtable.setRowHeight(30);
         jtable.getTableHeader().setPreferredSize(new Dimension(100, 30));
         UIUtilis.setJTableColumnsWidth(jtable, 500, 2, 82, 8, 8);
+        justifyTable(jtable);
 		tablePanel = new JPanel(new GridLayout(1,1));
 		tablePanel.add(jtable); 
 		tablePanel.setVisible(true);
@@ -199,9 +198,8 @@ public class ReceiptWindowUI extends JFrame {
 		
 		//code for bottomPanel starts here
 		GroupLayout bottomLayout = new javax.swing.GroupLayout(bottomPanel);
-		
 
-		//attempt2
+		addTableListener(jtable);
 		advance.setText("Advance");
 		balance.setText("Balance");
 		totalAmount.setText("Total");
@@ -275,10 +273,29 @@ public class ReceiptWindowUI extends JFrame {
 		System.out.println(" evt.getActionCommand() : "+e.getActionCommand());
 		UIUtilis.convertPanelToPdf(tablePanel,900,2000,"/home/himankjain/Videos/mj/my_panel_pdf.pdf");
 	}
-
-	protected void submitBtnActionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
+	private void justifyTable(JTable table){
+		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+		centerRenderer.setHorizontalAlignment( JLabel.CENTER );
+		table.getColumnModel().getColumn(KeyConstant.SRNO_COLUMN_INDEX).setCellRenderer( centerRenderer );
+	}
+	protected BillBO submitBtnActionPerformed(ActionEvent evt) {
+		BillBO bill =new BillBO();
+		try{
+			
 		
+		bill.setCompanyName(companyNameValue.getText());
+//		bill.setBilldate(dateValue.getAccessibleContext());
+		bill.setAdvance(Double.valueOf(advValue.getText()));
+		bill.setBalance(Double.valueOf(balValue.getText()));
+		bill.setBillId("");
+		bill.setLineItems(fetchLineItemDataFromTable(jtable));
+		bill.setTotalAmount(Double.valueOf(totalValue.getText()));
+		}
+		catch(Exception e){
+			e.printStackTrace();
+			UIUtilis.setWarningMessage(e.getLocalizedMessage());
+		}
+		return bill;
 	}
 
 	public void setAllDataDields(ReceiptWindow receiptWindow){
@@ -286,7 +303,24 @@ public class ReceiptWindowUI extends JFrame {
 		return;
 		}
 	}
-	
+	public List<LineItemBO> fetchLineItemDataFromTable(JTable table){
+		List<LineItemBO> data=new ArrayList<>();
+		for(int row=0;row<=jtable.getSelectedRowCount();row++){
+				LineItemBO lineItemBO=new LineItemBO();
+				lineItemBO.setSrNo((Integer)jtable.getValueAt(row, KeyConstant.SRNO_COLUMN_INDEX));
+				lineItemBO.setParticular((String)jtable.getValueAt(row, KeyConstant.PARTICULAR_COLUMN_INDEX));
+				QuantityBO quantityBO=new QuantityBO();
+				quantityBO.setUnit(KeyConstant.QUANTITY_UNIT);
+				quantityBO.setValue(Double.valueOf((String)jtable.getValueAt(row, KeyConstant.QUANTITY_COLUMN_INDEX)));
+				lineItemBO.setQuantity(quantityBO);
+				lineItemBO.setAmount(Double.valueOf((String)jtable.getValueAt(row, KeyConstant.AMOUNT_COLUMN_INDEX)));
+				data.add(lineItemBO);
+				System.out.println(lineItemBO.getSrNo()+":"+lineItemBO.getParticular()+":"+lineItemBO.getAmount());
+			
+		}
+		
+		return data;
+	}
 	private void resetBtnActionPerformed(ActionEvent evt) {
 		System.out.println(" evt.getActionCommand() : "+evt.getActionCommand());
 		companyNameValue.setText("");
@@ -302,15 +336,79 @@ public class ReceiptWindowUI extends JFrame {
 		a.frame.setVisible(true);
 		this.setVisible(false);
 	}
-	
+	private void addTableListener(JTable jtable){
+		Action tableAction = new AbstractAction()
+		{
+		    /**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			public void actionPerformed(ActionEvent e)
+		    {
+		      addTableListenerValidations(e);
+		    }
+		};		
+		@SuppressWarnings("unused")
+		TableCellListener tableListener = new TableCellListener(jtable, tableAction);		//attempt2
+		
+	}
 	private void addRowBtnActionPerformed(ActionEvent evt,final DefaultTableModel model){ 
 		String s = addRowValue.getText();
 		int numRowToAdd = Integer.parseInt(s.trim());
 		if(numRowToAdd>15){
-			JOptionPane.showMessageDialog(null,"The Number of rows should not be more than 15 rows at a time.");	
+			UIUtilis.setWarningMessage("The Number of rows should not be more than 15 rows at a time.");	
 		}else{
 			for(int i=0;i<numRowToAdd;i++)
 			model.insertRow(1, new String [3]); 
 		}
 	}
+	private void addTableListenerValidations (ActionEvent e){
+		  TableCellListener tcl = (TableCellListener)e.getSource();
+	        System.out.println("Row   : " + tcl.getRow());
+	        System.out.println("Column: " + tcl.getColumn());
+	        System.out.println("Old   : " + tcl.getOldValue());
+	        System.out.println("New   : " + tcl.getNewValue());
+	        if(!checkUnfilledLineItems(tcl))
+	        	populateSrNoValidation(tcl);
+	        else{
+	        	UIUtilis.setWarningMessage("Line Items before row no "+(tcl.getRow()+1)+" are not filled");
+	        	tcl.getTable().setValueAt(tcl.getOldValue(), tcl.getRow(), tcl.getColumn());
+	        }
+	}
+	
+	private boolean checkUnfilledLineItems(TableCellListener tcl){
+		int row=tcl.getRow();
+		boolean isUnfilled=false;
+		JTable jtableSet=tcl.getTable();
+		for(int i=0;i<=row;i++){
+			Object data= jtableSet.getValueAt(i, 1);
+			if(checkNullData(data) || checkBlankStringData((String)data) ){
+				isUnfilled=true;
+			}
+		}
+		return isUnfilled;  
+	}
+	
+	
+	private void populateSrNoValidation(TableCellListener tcl){
+		if(tcl.getColumn()==1 && !checkNullData(tcl.getNewValue()) && !checkBlankStringData((String)tcl.getNewValue())){
+				tcl.getTable().setValueAt(tcl.getRow()+1, tcl.getRow(), tcl.getColumn()-1);
+		}
+	}
+	public boolean checkNullData(Object data){
+		if(data==null)
+			return true;
+		else 
+			return false;
+	}
+	public boolean checkBlankStringData(String data){
+		if (data.trim().equalsIgnoreCase(KeyConstant.BLANK_STRING))
+			return true;
+		else
+			return false;
+	}
+//	private void
+	 
+	
 }

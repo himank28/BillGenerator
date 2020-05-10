@@ -7,6 +7,8 @@ import javax.swing.*;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+import com.navkar.billGenerator.keyconstants.KeyConstant;
+
 public class HelloWorld {
 	JFrame frame;
 		HelloWorld(){  
@@ -45,7 +47,7 @@ public class HelloWorld {
 		    	 for(char a:password){
 		    		 pass+=a;
 			     };
-			     if(pass.equals("12")){
+			     if(pass.equals(KeyConstant.PASSWORD)){
 			    	 frame.setVisible(false);
 			    	 ReceiptWindowUI receiptWindow = new ReceiptWindowUI();
 			    }
